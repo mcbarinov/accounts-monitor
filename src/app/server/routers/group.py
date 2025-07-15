@@ -10,7 +10,7 @@ from starlette.responses import PlainTextResponse
 
 from app.core.constants import Naming
 from app.core.db import Group
-from app.core.services.group import ProcessAccountBalancesResult, ProcessAccountNamingsResult
+from app.core.services.group import CoinCleanupInfo, ProcessAccountBalancesResult, ProcessAccountNamingsResult
 from app.core.types import AppView
 
 router = APIRouter(prefix="/api/groups", tags=["group"])
@@ -80,3 +80,14 @@ class CBV(AppView):
     @router.post("/{id}/reset-group-balances")
     async def reset_group_balances(self, id: ObjectId) -> None:
         await self.core.services.group.reset_group_balances(ObjectId(id))
+
+    @router.get("/{id}/coin-cleanup")
+    async def get_coin_cleanup_info(self, id: ObjectId) -> list[CoinCleanupInfo]:
+        """Get information about coins for cleanup - balances, check dates, and unchecked accounts."""
+        return await self.core.services.group.get_coin_cleanup_info(id)
+
+    @router.post("/{id}/remove-coins")
+    async def remove_coins_bulk(self, id: ObjectId, coin_ids: Annotated[list[str], Body(...)]) -> dict[str, int]:
+        """Remove multiple coins from a group."""
+        removed_count = await self.core.services.group.remove_coins_bulk(id, coin_ids)
+        return {"removed_count": removed_count}

@@ -93,6 +93,13 @@ class CBV(AppView):
             "group.j2", group=group, info=info, coins_by_network_type=coins_by_network_type, namings=namings
         )
 
+    @router.get("/groups/{group_id}/coin-cleanup")
+    async def group_coin_cleanup(self, group_id: ObjectId) -> HTMLResponse:
+        group = await self.core.db.group.get(group_id)
+        cleanup_info = await self.core.services.group.get_coin_cleanup_info(group_id)
+
+        return await self.render.html("group_coin_cleanup.j2", group=group, cleanup_info=cleanup_info)
+
     @router.get("/balances")
     async def balances(self, group: OptionalObjectId = None, coin: str | None = None, limit: int = 1000) -> HTMLResponse:
         query: dict[str, object] = {}
@@ -250,3 +257,15 @@ class ActionCBV(AppView):
         await self.core.db.group.set(group_id, {"name": name, "notes": notes})
         self.render.flash("group name and notes updated successfully")
         return redirect(f"/groups/{group_id}")
+
+    @router.post("/groups/{group_id}/coin-cleanup/remove")
+    async def remove_coins_from_cleanup(
+        self, group_id: ObjectId, coin_ids: Annotated[list[str] | None, Form()] = None
+    ) -> RedirectResponse:
+        if not coin_ids:
+            self.render.flash("No coins selected for removal", is_error=True)
+            return redirect(f"/groups/{group_id}/coin-cleanup")
+
+        removed_count = await self.core.services.group.remove_coins_bulk(group_id, coin_ids)
+        self.render.flash(f"Successfully removed {removed_count} coins from group")
+        return redirect(f"/groups/{group_id}/coin-cleanup")

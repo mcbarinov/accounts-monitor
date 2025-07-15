@@ -1,6 +1,7 @@
 import asyncio
 import logging
 from dataclasses import dataclass
+from datetime import datetime
 from decimal import Decimal
 from pathlib import Path
 from typing import cast
@@ -45,6 +46,14 @@ class ImportGroupItem(BaseModel):
     coins: str
     namings: str
     accounts: str
+
+
+class CoinCleanupInfo(BaseModel):
+    coin_id: str
+    coin_symbol: str
+    total_balance: Decimal
+    oldest_check: datetime | None
+    unchecked_count: int
 
 
 class GroupAccountsInfo(BaseModel):
@@ -347,3 +356,65 @@ class GroupService(Service):
         await self.core.db.account_balance.update_many(
             {"group": id}, {"$set": {"balance": None, "balance_raw": None, "checked_at": None}}
         )
+
+    async def get_coin_cleanup_info(self, group_id: ObjectId) -> list[CoinCleanupInfo]:
+        """Get information about coins for cleanup - balances, check dates, and unchecked accounts."""
+        group = await self.core.db.group.get(group_id)
+        total_accounts = len(group.accounts)
+
+        cleanup_info = []
+
+        for gb in await self.core.db.group_balance.find({"group": group_id}):
+            coin = self.core.services.coin.get_coin(gb.coin)
+
+            # Calculate total balance
+            # Handle both None values and missing accounts in balances dict
+            total_balance = Decimal(0)
+            if gb.balances:
+                for balance in gb.balances.values():
+                    if balance is not None:
+                        total_balance += balance
+
+            # Find oldest check date
+            oldest_check = None
+            if gb.checked_at:
+                # Filter out None values before finding minimum
+                valid_check_dates = [date for date in gb.checked_at.values() if date is not None]
+                if valid_check_dates:
+                    oldest_check = min(valid_check_dates)
+
+            # Count unchecked accounts
+            # Handle both cases:
+            # 1) Accounts don't exist in checked_at dict until checked
+            # 2) Accounts exist in checked_at dict with None values
+            unchecked_count = 0
+            if gb.checked_at:
+                for account in group.accounts:
+                    if account not in gb.checked_at or gb.checked_at[account] is None:
+                        unchecked_count += 1
+            else:
+                # No checked_at dict means all accounts are unchecked
+                unchecked_count = total_accounts
+
+            cleanup_info.append(
+                CoinCleanupInfo(
+                    coin_id=gb.coin,
+                    coin_symbol=coin.symbol,
+                    total_balance=total_balance,
+                    oldest_check=oldest_check,
+                    unchecked_count=unchecked_count,
+                )
+            )
+
+        return cleanup_info
+
+    async def remove_coins_bulk(self, group_id: ObjectId, coin_ids: list[str]) -> int:
+        """Remove multiple coins from a group."""
+        removed_count = 0
+        for coin_id in coin_ids:
+            try:
+                await self.remove_coin(group_id, coin_id)
+                removed_count += 1
+            except Exception:
+                logger.exception("Failed to remove coin %s from group %s", coin_id, group_id)
+        return removed_count

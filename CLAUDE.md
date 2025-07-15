@@ -34,9 +34,11 @@ just audit
 # Full build (includes all above)
 just build
 
-# Development mode
+# Development mode (DO NOT RUN - already running with auto-reload)
 just dev
 ```
+
+**IMPORTANT**: Never run `just dev` yourself. The development server is already running with auto-reload functionality. All code changes are automatically detected and the server restarts automatically.
 
 ## Architecture Notes
 

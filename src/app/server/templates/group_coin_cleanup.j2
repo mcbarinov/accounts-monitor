@@ -1,0 +1,149 @@
+{% extends "inc/base.j2" %}
+{% block content %}
+
+<div class="page-header">
+  <h2>coin cleanup / {{ group.name }}</h2>
+  <sl-divider vertical></sl-divider>
+  <sl-button-group>
+    <sl-button onclick="selectZeroBalance()">select zero balance</sl-button>
+    <sl-button onclick="document.querySelector('#dialog-remove-coins').show()" variant="danger">remove selected coins</sl-button>
+  </sl-button-group>
+  <sl-divider vertical></sl-divider>
+  <sl-button href="/groups/{{ group.id }}" variant="neutral">back to group</sl-button>
+</div>
+
+<form id="cleanup-form" method="post" action="/groups/{{ group.id }}/coin-cleanup/remove">
+  <table class="sortable">
+    <thead>
+      <tr>
+        <th>select</th>
+        <th>coin</th>
+        <th>total balance</th>
+        <th>oldest check</th>
+        <th>unchecked accounts</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for coin_info in cleanup_info %}
+      <tr data-balance="{{ coin_info.total_balance }}">
+        <td>
+          <input type="checkbox" name="coin_ids" value="{{ coin_info.coin_id }}" class="coin-checkbox">
+        </td>
+        <td>
+          <strong>{{ coin_info.coin_symbol }}</strong><br>
+          <small>{{ coin_info.coin_id }}</small>
+        </td>
+        <td>
+          <span class="balance-value">{{ coin_info.total_balance }}</span>
+        </td>
+        <td>
+          {% if coin_info.oldest_check %}
+            {{ coin_info.oldest_check.strftime('%Y-%m-%d %H:%M') }}
+          {% else %}
+            <em>Never checked</em>
+          {% endif %}
+        </td>
+        <td>
+          {% if coin_info.unchecked_count > 0 %}
+            <span class="warning">{{ coin_info.unchecked_count }}</span>
+          {% else %}
+            0
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</form>
+
+<sl-dialog id="dialog-remove-coins" label="Remove selected coins">
+  <p>Are you sure you want to remove the selected coins from this group?</p>
+  <p><strong>This action cannot be undone.</strong></p>
+  <p>Selected coins: <span id="selected-count">0</span></p>
+  <div style="margin-top: 1rem;">
+    <sl-button onclick="document.querySelector('#dialog-remove-coins').hide()">Cancel</sl-button>
+    <sl-button onclick="removeSelectedCoins()" variant="danger">Remove coins</sl-button>
+  </div>
+</sl-dialog>
+
+<script>
+function selectZeroBalance() {
+  const checkboxes = document.querySelectorAll('.coin-checkbox');
+  checkboxes.forEach(cb => {
+    const row = cb.closest('tr');
+    const balance = parseFloat(row.dataset.balance);
+    cb.checked = balance === 0;
+  });
+  updateSelectedCount();
+}
+
+function updateSelectedCount() {
+  const selected = document.querySelectorAll('.coin-checkbox:checked');
+  document.getElementById('selected-count').textContent = selected.length;
+}
+
+async function removeSelectedCoins() {
+  const selected = document.querySelectorAll('.coin-checkbox:checked');
+  const coinIds = Array.from(selected).map(cb => cb.value);
+  
+  if (coinIds.length === 0) {
+    alert('No coins selected');
+    return;
+  }
+  
+  try {
+    const response = await fetch('/api/groups/{{ group.id }}/remove-coins', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(coinIds)
+    });
+    
+    if (response.ok) {
+      const result = await response.json();
+      alert(`Successfully removed ${result.removed_count} coins`);
+      window.location.reload();
+    } else {
+      alert('Error removing coins');
+    }
+  } catch (error) {
+    alert('Error removing coins: ' + error.message);
+  }
+  
+  document.querySelector('#dialog-remove-coins').hide();
+}
+
+// Update selected count when checkboxes change
+document.addEventListener('change', function(event) {
+  if (event.target.classList.contains('coin-checkbox')) {
+    updateSelectedCount();
+  }
+});
+
+// Initial count update
+updateSelectedCount();
+
+</script>
+
+<style>
+.balance-value {
+  font-family: monospace;
+  font-weight: bold;
+}
+
+.warning {
+  color: #ff6b6b;
+  font-weight: bold;
+}
+
+.coin-checkbox {
+  transform: scale(1.2);
+}
+
+tbody tr[data-balance="0"] .balance-value {
+  color: #666;
+}
+</style>
+
+{% endblock %}

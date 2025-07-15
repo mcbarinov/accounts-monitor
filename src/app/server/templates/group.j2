@@ -20,6 +20,7 @@
     <sl-menu>
       <sl-menu-item><a href="/names?group={{ group.id }}">view names</a></sl-menu-item>
       <sl-menu-item><a href="/balances?group={{ group.id }}">view balances</a></sl-menu-item>
+      <sl-menu-item><a href="/groups/{{ group.id }}/coin-cleanup">coin cleanup</a></sl-menu-item>
       <sl-menu-item><a data-target="modal-name-and-notes" onclick="toggleModal(event)">update name and
           notes</a></sl-menu-item>
       <sl-menu-item><a href="/api-post/groups/{{ group.id }}/reset-group-balances" {{ confirm }}>reset balances</a>
