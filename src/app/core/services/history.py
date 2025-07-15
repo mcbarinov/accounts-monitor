@@ -42,7 +42,7 @@ class HistoryService(Service):
         balances_checked_at = {b.coin: b.checked_at for b in group_balances}
         group_namings = await self.core.db.group_name.find({"group": group_id})
         names = {n.naming: n.names for n in group_namings}
-        names_checked_at = {n.naming: n.checked_at for n in group_namings}
+        names_checked_at = {n.naming.value: n.checked_at for n in group_namings}
         return await self.core.db.history.insert_one(
             History(
                 id=ObjectId(),
