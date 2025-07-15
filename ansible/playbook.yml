@@ -1,0 +1,6 @@
+---
+- name: Manage a mm-base6 app
+  hosts: servers
+  gather_facts: false
+  roles:
+    - local.mm.mm_base6

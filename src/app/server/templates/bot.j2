@@ -1,0 +1,31 @@
+{% extends "inc/base.j2" %}
+{% block content %}
+
+<div class="page-header">
+  <h2>bot</h2>
+  <sl-divider vertical></sl-divider>
+  <sl-button-group>
+    <sl-button href="/networks">networks</sl-button>
+    <sl-button href="/namings">namings</sl-button>
+    <sl-button href="/coins">coins</sl-button>
+    <sl-button href="/names">names</sl-button>
+    <sl-button href="/balances">balances</sl-button>
+    <sl-button href="/naming-problems">naming problems</sl-button>
+    <sl-button href="/rpc-monitoring">rpc monitoring</sl-button>
+  </sl-button-group>
+</div>
+
+<table>
+  <tr>
+    <td>check namings</td>
+    <td>{{ state.check_namings | yes_no }}</td>
+    <td><a href="/api-post/bot/toggle-check-namings">toggle</a></td>
+  </tr>
+  <tr>
+    <td>check balances</td>
+    <td>{{ state.check_balances | yes_no }}</td>
+    <td><a href="/api-post/bot/toggle-check-balances">toggle</a></td>
+  </tr>
+</table>
+
+{% endblock %}

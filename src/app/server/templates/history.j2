@@ -1,0 +1,23 @@
+{% extends "inc/base.j2" %}
+{% block content %}
+<div class="page-header">
+  <h2>history</h2>
+</div>
+
+<table>
+  <tr>
+    <th>created_at</th>
+    <th>group</th>
+    <th>view</th>
+    <th>delete</th>
+  </tr>
+  {% for h in history %}
+  <tr>
+    <td>{{ h.created_at | dt }}</td>
+    <td>{{ h.group.name }}</td>
+    <td><a href="/history/{{ h.id }}">view</a></td>
+    <td><a href="/api-delete/history/{{ h.id }}" {{ confirm }}>delete</a></td>
+  </tr>
+  {% endfor %}
+</table>
+{% endblock %}

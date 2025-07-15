@@ -1,0 +1,21 @@
+{% extends "inc/base.j2" %}
+{% block content %}
+<div class="page-header">
+  <h2>namings</h2>
+</div>
+
+<table>
+  <tr>
+    <th>naming</th>
+    <th>network</th>
+    <th>oldest checked time</th>
+  </tr>
+  {% for n in namings %}
+  <tr>
+    <td>{{ n.value }}</td>
+    <td>{{ n.network }}</td>
+    <td>{{ oldest_checked_time[n] | dt }}</td>
+  </tr>
+  {% endfor %}
+</table>
+{% endblock %}

@@ -1,0 +1,50 @@
+{% extends "inc/base.j2" %}
+{% block content %}
+<div class="page-header">
+  <h2>coins / {{ coins | length }}</h2>
+  <sl-divider vertical></sl-divider>
+  <sl-button-group>
+    <sl-button onclick="document.querySelector('#dialog-import').show()">import</sl-button>
+    <sl-button href="/coins/export">export</sl-button>
+    <sl-button href="/coins/check-stats">check stats</sl-button>
+  </sl-button-group>
+</div>
+
+<sl-dialog id="dialog-import" label="import coins">
+  <form method="post" action="/coins/import" class="stack">
+    <sl-textarea name="value" placeholder="coins as TOML document" rows="10" cols="10" required></sl-textarea>
+    <sl-button type="submit" variant="primary">import</sl-button>
+  </form>
+</sl-dialog>
+
+<table>
+  <tr>
+    <th>network</th>
+    <th>symbol</th>
+    <th>decimals</th>
+    <th>token</th>
+    <th>actions</th>
+  </tr>
+  {% for c in coins %}
+  <tr>
+    <td nowrap="nowrap">{{ c.network }}</td>
+    <td> <a href="{{ explorer_token_map[c.id] }}">{{ c.symbol }}</a> </td>
+    <td>{{ c.decimals }}</td>
+    <td>
+      {{ c.token | empty }}<br>
+      {{ c.notes }}
+    </td>
+    <td>
+      <sl-dropdown>
+        <sl-button slot="trigger" caret>actions</sl-button>
+        <sl-menu>
+          <sl-menu-item><a href="/api-delete/coins/{{ c.id }}" {{ confirm }}>delete</a></sl-menu-item>
+          <sl-menu-item><a href="/api/coins/{{ c.id }}">view</a></sl-menu-item>
+        </sl-menu>
+      </sl-dropdown>
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+
+{% endblock %}

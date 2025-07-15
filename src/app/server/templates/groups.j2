@@ -1,0 +1,138 @@
+{% extends "inc/base.j2" %}
+{% block content %}
+
+<div class="page-header">
+  <h2>groups / {{ groups | length }}</h2>
+  <sl-divider vertical></sl-divider>
+  <form class="inline">
+    <sl-select name="network_type" placeholder="network type" value="{{ form.network_type }}">
+      {% for nt in network_types %}
+      <sl-option value="{{ nt }}">{{ nt }}</sl-option>
+      {% endfor %}
+    </sl-select>
+    <sl-button type="submit">filter</sl-button>
+  </form>
+  <sl-divider vertical></sl-divider>
+  <sl-button-group>
+    <sl-button onclick="document.querySelector('#dialog-add').show()">add</sl-button>
+    <sl-button href="/api/groups/export">export</sl-button>
+    <sl-button onclick="document.querySelector('#dialog-import').show()">import</sl-button>
+  </sl-button-group>
+</div>
+
+<sl-dialog id="dialog-import" label="import groups as TOML document">
+  <form action="/groups/import" method="post" class="stack">
+    <sl-textarea name="toml" placeholder="TOML" rows="10"></sl-textarea>
+    <sl-button type="submit" variant="primary">import</sl-button>
+  </form>
+</sl-dialog>
+
+<sl-dialog id="dialog-add" label="add a group">
+    <form action="/groups" method="post" class="stack">
+      <sl-input type="text" name="name" placeholder="name" required></sl-input>
+      <select name="network_type" required onchange="addGroupChangeNetworkType(event)">
+        <option value="" disabled selected>network type...</option>
+        {% for nt in network_types %}
+        <option value="{{ nt.value }}">{{ nt.value }}</option>
+        {% endfor %}
+      </select>
+      <sl-input type="text" name="notes" placeholder="notes"></sl-input>
+      <select name="namings" multiple title="namings">
+        {% for n in namings %}
+        <option value="{{ n.value }}" id="naming-{{ n.network_type.value }}">{{ n.value }}</option>
+        {% endfor %}
+      </select>
+      <select name="coins" multiple style="height:300px" title="coins">
+        {% for network_type, coins in coins_by_network_type.items() %}
+        <optgroup label="{{ network_type.value }}" id="coins-{{ network_type.value }}">
+          {% for c in coins %}
+          <option value="{{ c.id }}">{{ c.network.value }} / {{ c.symbol }}</option>
+          {% endfor %}
+        </optgroup>
+        {% endfor %}
+      </select>
+      <sl-button type="submit" variant="primary">add</sl-button>
+    </form>
+</sl-dialog>
+
+
+
+<table>
+  <tr>
+    <th>name</th>
+    <th>notes</th>
+    <th>namings</th>
+    <th>coins</th>
+    <th>accounts</th>
+    <th>view</th>
+  </tr>
+  {% for g in groups %}
+  <tr>
+    <td>
+      {{ g.name }}<br>
+      {{ g.network_type.value }}
+    </td>
+    <td>{{ g.notes }}</td>
+    <td>{% for n in g.namings %} {{ n.value }} {% endfor %}</td>
+    <td>
+      {% for n in g.get_coin_networks() %}
+      {{ n }}:
+      {% for s in g.get_coin_symbols(n) %}{{ s }} {% endfor %}
+      <br>
+      {% endfor %}
+    </td>
+    <td>{{ g.accounts | length }}</td>
+    <td><a href="/groups/{{ g.id }}">view</a></td>
+  </tr>
+  {% endfor %}
+</table>
+
+
+
+
+
+<script>
+  function addGroupChangeNetworkType(event) {
+    const selectedNetwork = event.target.value;
+
+    // ————— NAMINGS SELECT —————
+    const namingSelect = document.querySelector('select[name="namings"]');
+    // Loop through all naming options
+    namingSelect.querySelectorAll('option').forEach(opt => {
+      if (opt.id === 'naming-' + selectedNetwork) {
+        // Show the option matching the selected network
+        opt.hidden = false;
+        opt.disabled = false;
+      } else {
+        // Hide all other naming options
+        opt.hidden = true;
+        opt.disabled = true;
+      }
+      // Deselect everything to reset prior selections
+      opt.selected = false;
+    });
+
+    // ————— COINS SELECT —————
+    const coinsSelect = document.querySelector('select[name="coins"]');
+    // Loop through each optgroup of coins
+    coinsSelect.querySelectorAll('optgroup').forEach(group => {
+      if (group.id === 'coins-' + selectedNetwork) {
+        // Show only the matching coin group
+        group.hidden = false;
+        group.querySelectorAll('option').forEach(opt => {
+          opt.disabled = false;   // enable its options
+        });
+      } else {
+        // Hide all other coin groups
+        group.hidden = true;
+        group.querySelectorAll('option').forEach(opt => {
+          opt.disabled = true;    // disable their options
+          opt.selected = false;   // deselect any previously selected
+        });
+      }
+    });
+  }
+
+</script>
+
+{% endblock %}

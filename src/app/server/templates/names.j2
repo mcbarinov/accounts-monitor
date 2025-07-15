@@ -1,0 +1,49 @@
+{% extends "inc/base.j2" %}
+{% block content %}
+
+<div class="page-header">
+  <h2>names / {{ names | length }}</h2>
+  <sl-divider vertical></sl-divider>
+  <form class="inline">
+    <sl-select name="group" placeholder="group" value="{{ form.group }}" clearable>
+      {% for g in groups %}
+      <sl-option value="{{ g.id }}">{{ g.name }}</sl-option>
+      {% endfor %}
+    </sl-select>
+    <sl-select name="naming" placeholder="naming" value="{{ form.naming }}" clearable>
+      {% for n in namings %}
+      <sl-option value="{{ n }}">{{ n }}</sl-option>
+      {% endfor %}
+    </sl-select>
+    <sl-input type="number" name="limit" value="{{ form.limit or 1000 }}" placeholder="limit" min="1"></sl-input>
+    <sl-button type="submit">filter</sl-button>
+  </form>
+</div>
+
+<table>
+  <tr>
+    <th>account</th>
+    <th>naming</th>
+    <th>name</th>
+    <th>checked_at</th>
+    <th>actions</th>
+  </tr>
+  {% for n in names %}
+  <tr>
+    <td>{{ n.account }}</td>
+    <td>{{ n.naming.value }}</td>
+    <td>{{ n.name }}</td>
+    <td>{{ n.checked_at | dt }}</td>
+    <td>
+      <sl-dropdown>
+        <sl-button slot="trigger" caret>actions</sl-button>
+        <sl-menu>
+          <sl-menu-item><a href="/api-post/account-namings/{{ n.id }}/check">check</a></sl-menu-item>
+          <sl-menu-item><a href="/api/account-namings/{{ n.id }}">view</a></sl-menu-item>
+        </sl-menu>
+      </sl-dropdown>
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+{% endblock %}

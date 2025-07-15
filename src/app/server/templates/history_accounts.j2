@@ -1,0 +1,43 @@
+{% extends "inc/base.j2" %}
+{% block content %}
+
+<div class="page-header">
+  <h2>history / {{ history.group.name }} / {{ history.created_at | dt }}</h2>
+  <sl-divider vertical></sl-divider>
+  <sl-button href="/history/{{ history.id }}/diff">diff</sl-button>
+</div>
+
+<table class="sortable">
+  <thead>
+    <tr>
+      <th>n</th>
+      <th>account</th>
+      {% for naming in history.group.namings %}
+      <th>{{ naming.value }}</th>
+      {% endfor %}
+      {% for coin in history.group.coins %}
+      <th>
+        {{ info.coins_map[coin].network.value }}<br>
+        {{ info.coins_map[coin].symbol }}
+      </th>
+      {% endfor %}
+    </tr>
+  </thead>
+  <tbody>
+    {% for account in history.group.accounts %}
+    <tr>
+      <td>{{ loop.index }}</td>
+      <td>{{ account }}</td>
+      {% for naming in history.group.namings %}
+      <td>{{ info.get_name(naming, account) }}</td>
+      {% endfor %}
+      {% for coin in history.group.coins %}
+      <td>
+        <a href="{{ info.explorer_address(coin, account) }}">{{ info.get_balance(coin, account) }}</a>
+      </td>
+      {% endfor %}
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

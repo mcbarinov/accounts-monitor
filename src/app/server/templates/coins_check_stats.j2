@@ -1,0 +1,28 @@
+{% extends "inc/base.j2" %}
+{% block content %}
+<div class="page-header">
+  <h2>coins / oldest checked time</h2>
+</div>
+
+<table class="sortable">
+  <thead>
+    <tr>
+      <th>coin</th>
+      <th>oldest time</th>
+      <th>all accounts</th>
+      <th>never checked</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for key, value in stats.coins.items() %}
+    <tr>
+      <td>{{ key }}</td>
+      <td>{{ value.oldest_checked_time | dt }}</td>
+      <td>{{ value.all_count }}</td>
+      <td>{{ value.never_checked_count }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+{% endblock %}

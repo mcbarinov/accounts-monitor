@@ -1,0 +1,53 @@
+{% extends "inc/base.j2" %}
+{% block content %}
+
+<div class="page-header">
+  <h2>rpc monitoring</h2>
+  <sl-divider vertical></sl-divider>
+  <form class="inline">
+    <sl-select name="network" placeholder="network" value="{{ form.network }}">
+      {% for n in networks %}
+      <sl-option value="{{ n }}">{{ n }}</sl-option>
+      {% endfor %}
+    </sl-select>
+    <select name="success" placeholder="success">
+      <option value="">success...</option>
+      <option value="yes" {{ "selected" if form.success is sameas true }}>true</option>
+      <option value="no" {{ "selected" if form.success is sameas false }}>false</option>
+    </select>
+    <input type="number" name="limit" placeholder="limit" value="{{ form.limit }}">
+    <input type="submit" value="filter" class="outline">
+    <a href="/rpc-monitoring" class="outline" role="button">reset</a>
+  </form>
+</div>
+
+
+
+<div class="overflow-auto">
+  <table>
+    <tr>
+      <th>created_at</th>
+      <th>network</th>
+      <th>rpc_url</th>
+      <th>coin</th>
+      <th>success</th>
+      <th>time</th>
+      <th>error</th>
+      <th>view</th>
+    </tr>
+    {% for m in monitoring %}
+    <tr>
+      <td>{{ m.created_at | dt }}</td>
+      <td>{{ m.network }}</td>
+      <td>{{ m.rpc_url }}</td>
+      <th>{{ m.coin }}</th>
+      <td>{{ m.success | yes_no }}</td>
+      <td>{{ m.response_time }}</td>
+      <td>{{ m.error }}</td>
+      <td><a href="/api/rpc-monitoring/{{ m.id }}">view</a></td>
+    </tr>
+    {% endfor %}
+  </table>
+</div>
+
+{% endblock %}

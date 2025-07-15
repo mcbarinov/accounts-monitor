@@ -1,0 +1,133 @@
+{% extends "inc/base.j2" %}
+{% block content %}
+
+<div class="page-header">
+  <h2>group / {{ group.name }}</h2>
+  <sl-divider vertical></sl-divider>
+  <sl-button-group>
+    <sl-button onclick="document.querySelector('#dialog-name-and-notes').show()">update name and notes</sl-button>
+    <sl-button onclick="document.querySelector('#dialog-accounts').show()">accounts ({{ group.accounts | length
+      }})</sl-button>
+    <sl-button onclick="document.querySelector('#dialog-coins').show()">coins ({{ group.coins | length
+      }})</sl-button>
+    <sl-button onclick="document.querySelector('#dialog-namings').show()">namings ({{ group.namings | length
+      }})</sl-button>
+    <sl-button href="/api-post/history?group={{ group.id }}" {{ confirm }}>create history</sl-button>
+  </sl-button-group>
+  <sl-divider vertical></sl-divider>
+  <sl-dropdown>
+    <sl-button slot="trigger" caret>other actions</sl-button>
+    <sl-menu>
+      <sl-menu-item><a href="/names?group={{ group.id }}">view names</a></sl-menu-item>
+      <sl-menu-item><a href="/balances?group={{ group.id }}">view balances</a></sl-menu-item>
+      <sl-menu-item><a data-target="modal-name-and-notes" onclick="toggleModal(event)">update name and
+          notes</a></sl-menu-item>
+      <sl-menu-item><a href="/api-post/groups/{{ group.id }}/reset-group-balances" {{ confirm }}>reset balances</a>
+      </sl-menu-item>
+      <sl-menu-item><a href="/api-delete/groups/{{ group.id }}" {{ confirm }}>delete</a></sl-menu-item>
+      <sl-menu-item><a href="/api/groups/{{ group.id }}">view</a></sl-menu-item>
+    </sl-menu>
+  </sl-dropdown>
+
+</div>
+
+<sl-dialog id="dialog-name-and-notes" label="update name and notes">
+  <form method="post" action="/groups/{{ group.id }}/name-and-notes" class="stack">
+    <sl-input name="name" value="{{ group.name }}"></sl-input>
+    <sl-input name="notes" value="{{ group.notes }}"></sl-input>
+    <sl-button type="submit" variant="primary">save</sl-button>
+  </form>
+</sl-dialog>
+<sl-dialog id="dialog-accounts" label="update accounts" style="--width: 800px;">
+  <form method="post" action="/groups/{{ group.id }}/accounts" class="stack">
+    <sl-textarea name="value" rows="20" required value="{{ " \n".join(group.accounts) }}"></sl-textarea>
+    <sl-button type="submit" variant="primary">save</sl-button>
+  </form>
+</sl-dialog>
+<sl-dialog id="dialog-coins" label="update coins">
+  <form method="post" action="/groups/{{ group.id }}/coins" class="stack">
+    <sl-select name="value" placeholder="coins" size="small" multiple style="height: 15rem;"
+      value="{{ group.coins | join(' ') }}">
+      {% for network_type, coins in coins_by_network_type.items() %}
+      {% if group.network_type == network_type %}
+      <small>{{ network_type.value }}</small>
+      {% for c in coins %}
+      <sl-option value="{{ c.id }}">{{ c.network.value }} / {{ c.symbol }}</sl-option>
+      {% endfor %}
+      <sl-divider></sl-divider>
+      {% endif %}
+      {% endfor %}
+    </sl-select>
+    <sl-button type="submit" variant="primary">save</sl-button>
+  </form>
+</sl-dialog>
+<sl-dialog id="dialog-namings" label="update namings">
+  <form method="post" action="/groups/{{ group.id }}/namings" class="stack">
+    <sl-select name="value" multiple style="min-height:300px" value="{{ group.namings | join(' ') }}">
+      {% for naming in namings %}
+      {% if naming.network_type == group.network_type %}
+      <sl-option value="{{ naming }}">{{ naming }}</sl-option>
+      {% endif %}
+      {% endfor %}
+    </sl-select>
+    <sl-button type="submit" variant="primary">save</sl-button>
+  </form>
+</sl-dialog>
+
+<table class="sortable">
+  <thead>
+    <tr>
+      <th>n<br></th>
+      <th>account<br></th>
+      <th>note<br></th>
+      {% for naming in group.namings %}
+      <th>{{ naming.value }}<br></th>
+      {% endfor %}
+      {% for coin in group.coins %}
+      <th>
+        <p style="white-space: nowrap;">{{ info.coins_map[coin].network.value }}</p>{{ info.coins_map[coin].symbol }}
+      </th>
+      {% endfor %}
+    </tr>
+    <tr>
+      <th></th>
+      <th></th>
+      <th></th>
+      {% for naming in group.namings %}
+      <th></th>
+      {% endfor %}
+      {% for coin in group.coins %}
+      <th>{{ info.coins_sum[coin] }}</th>
+      {% endfor %}
+    </tr>
+  </thead>
+  <tbody>
+    {% for account in group.accounts %}
+    <tr>
+      <td>{{ loop.index }}</td>
+      <td>{{ account }}</td>
+      <td>
+        {{ group.account_notes[account] }}
+        <sl-button onclick="document.querySelector('#dialog-update-account-notes-{{ account }}').show()" variant="text"><sl-icon name="pencil"></sl-icon></sl-button>
+        <sl-dialog id="dialog-update-account-notes-{{ account }}" label="update notes for {{ account }}">
+          <form method="post" action="/groups/{{ group.id }}/update-account-notes" class="stack">
+            <input type="hidden" name="account" value="{{ account }}">
+            <sl-input type="text" name="notes" value="{{ group.account_notes[account] }}"></sl-input>
+            <sl-button type="submit" variant="primary">save</sl-button>
+          </form>
+        </sl-dialog>
+      </td>
+      {% for naming in group.namings %}
+      <td>{{ info.get_name(naming, account) }}</td>
+      {% endfor %}
+      {% for coin in group.coins %}
+      <td>
+        <a href="{{ info.explorer_address(coin, account) }}">{{ info.get_balance(coin, account) }}</a>
+      </td>
+      {% endfor %}
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+{% endblock %}

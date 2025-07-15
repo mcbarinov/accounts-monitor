@@ -1,0 +1,51 @@
+{% extends "inc/base.j2" %}
+{% block content %}
+
+<div class="page-header">
+  <h2>networks / {{ networks | length }}</h2>
+  <sl-divider vertical></sl-divider>
+  <sl-button-group>
+    <sl-button href="/networks/check-stats">check stats</sl-button>
+    <sl-button href="/api-post/networks/update-mm-node-checker">update mm-node-checker</sl-button>
+  </sl-button-group>
+</div>
+
+<table>
+  <tr>
+    <th>network</th>
+    <th>type</th>
+    <th>rpc urls</th>
+    <th>mm-node-checker rpc urls</th>
+  </tr>
+  {% for n in networks %}
+  <tr>
+    <td>{{ n }}</td>
+    <td>{{ n.network_type }}</td>
+    <td>
+      {% for rpc_url in rpc_urls[n] %}
+      {{ rpc_url }}
+      <sl-button href="/api-delete/networks/{{ n.value }}/delete-rpc-url?url={{ rpc_url | urlencode }}" title="delete"
+        variant="text" {{ confirm }}> <sl-icon name="trash" label="Settings"></sl-icon></sl-button>
+      <br>
+      {% endfor %}
+      <sl-divider></sl-divider>
+
+      <sl-button onclick="document.querySelector('#dialog-add-{{ n }}').show()">add</sl-button>
+      <sl-dialog id="dialog-add-{{ n }}" label="add rpc url">
+        <form method="post" action="/networks/{{ n.value }}/add-rpc-url" class="stack">
+          <sl-input type="text" name="url" placeholder="url"></sl-input>
+          <sl-button type="submit" variant="primary">add</sl-button>
+        </form>
+      </sl-dialog>
+    </td>
+    <td>
+      {% for u in mm_node_checker[n.value] %}
+      {{ u }}<br>
+      {% endfor %}
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+
+
+{% endblock %}
